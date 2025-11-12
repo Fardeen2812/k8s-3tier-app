@@ -1,25 +1,24 @@
 version: "3.8"
 
 services:
-  redis:
-    image: redis:7
-    container_name: simple_notes_redis
+# TIER 1: FRONTEND (NGINX)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: dockerfile
+    container_name: simple_notes_frontend
+    ports:
+      - "8080:80"
     restart: unless-stopped
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 2s
-      retries: 5
-
-  app:
+    depends_on:
+      - backend
+ 
+# TIER 2: BACKEND (FLASK)
+  backend:
     build:
       context: ./backend    # adjust if Dockerfile elsewhere
       dockerfile: dockerfile
-    container_name: simple_notes_app
-    ports:
-      - "5001:5001"
+    container_name: simple_notes_backend
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -27,5 +26,20 @@ services:
       - redis
     restart: unless-stopped
 
+# TIER 3: DATABASE (REDIS)
+  redis:
+    image: "redis:alpine"
+    container_name: simple_notes_redis
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+
 volumes:
   redis-data:
+ 

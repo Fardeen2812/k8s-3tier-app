@@ -1,9 +1,11 @@
 import os
 import redis
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 # Initialize Flask app
 app = Flask(__name__)
+CORS(app) # Enable CORS for all routes
 
 # Initialize Redis connection
 # We use os.environ.get() to read the 'REDIS_HOST' environment variable.
@@ -19,16 +21,6 @@ except Exception as e:
     print(f"Error connecting to Redis at {redis_host}: {e}")
     raise  # crash so you notice immediately
     db = None
-
-@app.route('/')
-def index():
-    """Serves the main HTML page (our frontend)."""
-    return render_template('index.html')
-
-@app.route('/favicon.ico')
-def favicon():
-    """Serves the favicon.ico file."""
-    return app.send_static_file('favicon.ico')
 
 @app.route('/api/notes', methods=['GET'])
 def get_notes():

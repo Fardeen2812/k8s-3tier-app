@@ -1,0 +1,16 @@
+# Use an official Nginx image as the base
+# Use an official Nginx image as the base
+FROM nginx:alpine
+
+# Remove the default Nginx config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy our custom config file
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy the static HTML, CSS, and JS files to the Nginx web root
+COPY ./index.html /usr/share/nginx/html/index.html
+COPY ./static/ /usr/share/nginx/html/static/
+
+# Expose port 80 (default Nginx port)
+EXPOSE 80

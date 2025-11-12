@@ -1,218 +1,131 @@
-# 🧱 K8s Note App — DevOps Journey (Flask + Redis + Docker + K8s)
+# 🧱 K8s Note App — A DevOps Journey
 
-A simple **note-taking web app** built to demonstrate a real-world **DevOps learning journey** — from a single Docker container to a fully automated Kubernetes deployment.
+A simple note-taking app, built to document a real-world DevOps journey. This project evolves from a single Docker container to a full Kubernetes deployment, showcasing a practical, hands-on approach to DevOps.
 
-The project evolves week-by-week as new DevOps concepts and tools are added, making it a perfect portfolio piece to showcase practical skills across the DevOps toolchain.
-
----
+-----
 
 ## 🧩 Project Overview
 
+This app is built with a 3-tier architecture, containerized with Docker, and orchestrated locally with Docker Compose.
+
 | Layer | Technology | Purpose |
 |-------|-------------|----------|
-| **Frontend** | HTML, CSS (Bootstrap) | Minimal UI for note creation |
-| **Backend** | Flask (Python 3.9) | REST API and web server |
-| **Cache / DB** | Redis | In-memory data storage for notes |
-| **Containerization** | Docker, Docker Compose | Local development & multi-container setup |
-| **Infrastructure (Future)** | Terraform + aws | Automated provisioning |
-| **Orchestration (Future)** | Kubernetes (AKS) | Cloud-native deployment |
-| **CI/CD (Future)** | Jenkins / GitHub Actions | Continuous build, test & deploy |
+| **Frontend** | Nginx, HTML/CSS/JS | Serves static UI & acts as a reverse proxy for the API |
+| **Backend** | Flask (Python 3.9) | REST API for note operations |
+| **Database** | Redis | In-memory data storage for notes |
 
----
+-----
 
 ## 📁 Repository Structure
 
-
-
-3tier-app/
+```
+k8s-3tier-app/
+│
+├── frontend/
+│   ├── dockerfile          # Nginx Dockerfile
+│   ├── nginx.conf          # Nginx reverse proxy configuration
+│   ├── index.html          # Static frontend UI
+│   └── static/
+│       └── favicon.ico
 │
 ├── backend/
-│ ├── app.py # Flask app (API + frontend routes)
-│ ├── dockerfile # Backend Dockerfile
-│ ├── requirements.txt # Python dependencies
-│ ├── templates/ # HTML templates
-│ ├── static/ # CSS / JS assets
-│ └── dump.rdb # Redis snapshot (optional)
+│   ├── app.py              # Flask API (pure backend)
+│   ├── dockerfile          # Backend Dockerfile
+│   └── requirements.txt    # Python dependencies
 │
-└── docker-compose.yml # Multi-container setup (Flask + Redis)
+└── docker-compose.yml      # Multi-container setup (Frontend + Backend + Redis)
+```
 
+-----
 
----
+## 🚀 The Journey: Milestones
 
-# 🗓️ DevOps Roadmap (By Stage)
+### 1\. Docker Fundamentals
 
-## 🧩 Week 1 — Docker Fundamentals
-🎯 **Goal:** Containerize the Flask backend.
+  * **Goal:** Containerize the Flask backend.
+  * **Action:** Wrote a `Dockerfile` for the Python app, built it, and ran it locally.
+  * **Result:** A portable Flask container running on `http://localhost:5001`.
 
-- Created a Dockerfile using Python 3.9-slim as the base.
-- Installed dependencies from `requirements.txt`.
-- Exposed port `5001` for external access.
-- Verified local container runs Flask app successfully.
+### 2\. Docker Compose (2-Tier)
 
-```bash
-docker build -t simple-notes-app .
-docker run -p 5001:5001 simple-notes-app
+  * **Goal:** Connect Flask to a Redis database.
+  * **Action:** Added a `docker-compose.yml` to launch and network the `app` and `redis` services.
+  * **Result:** A running 2-tier application.
 
+### 3\. 3-Tier Architecture & Reverse Proxy
 
-✅ Result: Flask app container runs locally on http://localhost:5001.
+  * **Goal:** Refactor to a 3-Tier app and fix external access.
+  * **Problem:** Accessing the 2-Tier app via `ngrok` failed. The browser (on `https://...`) was blocked from calling the `http://localhost:5001` API (Mixed Content & CORS).
+  * **Solution:**
+    1.  **Frontend Service:** Created a new `frontend` service using Nginx.
+    2.  **Pure API:** Stripped the Flask app into a pure, stateless API.
+    3.  **Reverse Proxy:** Configured Nginx to serve the static `index.html` AND proxy all `/api/` requests to the `backend` service.
+  * **Result:** A true 3-Tier system with a single entry point. The app is now perfectly accessible from the internet via `ngrok http 8080`.
 
-⚙️ Week 2 — Docker Compose (Multi-Container Setup)
+-----
 
-🎯 Goal: Connect Flask backend with Redis via Docker Compose.
+## 🧭 The Road Ahead
 
-Added docker-compose.yml for multi-container setup.
+This project isn't done\! Here's the plan to make it a production-ready, cloud-native application:
 
-Defined services:
+  * [ ] **Infrastructure as Code (Terraform + aws):** Provision an ECR registry and EKS cluster.
+  * [ ] **Kubernetes Deployment:** Deploy all three tiers to EKS using `kubectl` manifests and Helm.
+  * [ ] **CI/CD Automation (GitHub Actions):** Build a pipeline to auto-build, test, and deploy on every `git push`.
+  * [ ] **Monitoring:** Integrate Prometheus & Grafana to add observability.
+  * [ ] **Security:** Secure the app with HTTPS Ingress and manage secrets in Kubernetes.
 
-app → Flask backend
+-----
 
-redis → Redis cache
+## ⚙️ Run it Locally
 
-Linked via an internal Docker network.
+1.  **Prerequisites**
 
-Passed REDIS_HOST=redis environment variable.
+      * Docker Desktop (Mac / Windows / Linux)
+      * `ngrok` (optional for remote access)
 
-docker-compose up --build
+2.  **Clone the Repository**
 
+    ```bash
+    git clone https://github.com/<your-username>/k8s-3tier-app.git
+    cd k8s-3tier-app
+    ```
 
-✅ Result: App and Redis containers run together and share data seamlessly.
+3.  **Build and Run Containers**
 
-🌐 Week 3 — External Access via Ngrok
+    ```bash
+    docker-compose up --build
+    ```
 
-🎯 Goal: Access the app securely from the internet.
+    Once running, visit: **👉 `http://localhost:8080`** (The Nginx frontend)
 
-Installed and configured ngrok.
+4.  **Access From Internet (Optional)**
 
-Used ngrok to expose local container port.
+    ```bash
+    ngrok http 8080
+    ```
 
-Tested app on external devices using public HTTPS endpoint.
+    Copy the `https://` forwarding URL to test on your phone or another device.
 
-ngrok http 5001
+-----
 
+## 🧰 Troubleshooting
 
-✅ Result: Flask app accessible via secure URL (e.g., https://xyz.ngrok-free.dev).
-
-☁️ Week 4 — Infrastructure as Code (Terraform + aws) (Upcoming)
-
-🎯 Goal: Provision aws infrastructure using Terraform.
-
-Planned setup:
-
-Amazon Elastic Container Registry (ECR)
-
-Amazon Kubernetes Service (EKS)
-
-Terraform-managed deployments
-
-🧰 Tools: Terraform, aws CLI, ACR
-
-🌀 Week 5 — Kubernetes Deployment (Upcoming)
-
-🎯 Goal: Deploy Flask + Redis stack on AKS.
-
-Write manifests for:
-
-Flask Deployment & Service
-
-Redis Deployment & Service
-
-Configure Secrets, ConfigMaps, and Ingress for external access.
-
-🧰 Tools: kubectl, Helm, AKS
-
-🤖 Week 6 — CI/CD Automation (Upcoming)
-
-🎯 Goal: Automate builds and deployments.
-
-Setup GitHub Actions or Jenkins pipeline:
-
-Trigger on push
-
-Build Docker image
-
-Run tests
-
-Push to ACR
-
-Deploy to AKS automatically
-
-🧰 Tools: Jenkins, GitHub Actions, Terraform, kubectl
-
-📊 Week 7 — Monitoring & Observability (Upcoming)
-
-🎯 Goal: Add metrics and monitoring.
-
-Integrate Prometheus and Grafana.
-
-Set up health checks, dashboards, and alerts.
-
-⚙️ Local Setup
-1. Prerequisites
-
-Docker Desktop (Mac / Windows / Linux)
-
-Docker Compose
-
-Python 3.9+ (optional)
-
-ngrok
- (optional for remote access)
-
-2. Clone the Repository
-git clone https://github.com/<your-username>/<repo-name>.git
-cd 3tier-app
-
-3. Build and Run Containers
-docker-compose up --build
-
-
-Once running, visit:
-👉 http://localhost:5001
-
-4. Environment Variables
-Variable	Default	Description
-REDIS_HOST	redis	Redis hostname (service name in Docker)
-REDIS_PORT	6379	Redis port
-FLASK_ENV	development	Flask environment
-
-Example manual run:
-
-docker run -p 5001:5001 -e REDIS_HOST=redis simple-notes-app
-
-5. Access From Internet (Optional)
-ngrok http 5001
-
-
-Copy the HTTPS forwarding URL that appears and open it on your phone or another device.
-
-🧰 Common Issues & Fixes
 Issue	Cause	Fix
-Error 111 connecting to localhost:6379	Redis not reachable from Flask container	Use Docker Compose so both run on same network (REDIS_HOST=redis)
-“Server responded with status 500”	Flask app couldn’t reach Redis	Check that redis service is healthy (docker ps, docker logs redis)
-Can’t access via phone	Trying to open localhost or firewall blocking	Use ngrok or your machine’s LAN IP (192.168.x.x:5001)
-path not found during build	Wrong build context in docker-compose.yml	Ensure context: . if compose file is inside /backend
-🧭 Road Ahead
+Error 111 connecting to localhost:6379	Flask container can't find Redis.	Use Docker Compose. Both containers must be on the same Docker network (and use REDIS_HOST=redis).
+"Server responded with status 500"	Flask app couldn’t reach Redis.	Check that the redis service is healthy: docker ps and docker logs simple_notes_redis.
+App loads, but notes don't (API 404/CORS)	JavaScript is calling a hardcoded http://localhost:5001.	This is the 3-Tier solution! Ensure nginx.conf is proxying /api/ to the backend, and index.html calls a relative path (/api/notes).
 
- Deploy on Kubernetes (AKS)
+-----
 
- Integrate Terraform for IaC
-
- Implement CI/CD (GitHub Actions / Jenkins)
-
- Add monitoring with Prometheus + Grafana
-
- Secure with HTTPS ingress & secrets
-
-👨‍💻 Author
+## 👨‍💻 Author
 
 Fardeen Ali
-🚀 Devops engineer 
+🚀 Devops engineer
 Building this project step-by-step to master real-world DevOps —
 from Docker and CI/CD pipelines to cloud-native Kubernetes deployments.
 
-🪪 License
+## 🪪 License
 
-This project is open source under the MIT License
-.
+This project is open source under the MIT License.
 
-🧩 “Don’t just build an app — build the system that builds and runs the app.”
+🧩 *“Don’t just build an app — build the system that builds and runs the app.”*
