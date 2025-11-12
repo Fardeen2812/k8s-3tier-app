@@ -86,7 +86,7 @@ This project isn't done\! Here's the plan to make it a production-ready, cloud-n
 2.  **Clone the Repository**
 
     ```bash
-    git clone https://github.com/<your-username>/k8s-3tier-app.git
+    git clone https://github.com/Fardeen2812/k8s-3tier-app.git
     cd k8s-3tier-app
     ```
 
