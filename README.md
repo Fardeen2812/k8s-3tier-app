@@ -110,10 +110,7 @@ This project isn't done\! Here's the plan to make it a production-ready, cloud-n
 
 ## 🧰 Troubleshooting
 
-Issue	Cause	Fix
-Error 111 connecting to localhost:6379	Flask container can't find Redis.	Use Docker Compose. Both containers must be on the same Docker network (and use REDIS_HOST=redis).
-"Server responded with status 500"	Flask app couldn’t reach Redis.	Check that the redis service is healthy: docker ps and docker logs simple_notes_redis.
-App loads, but notes don't (API 404/CORS)	JavaScript is calling a hardcoded http://localhost:5001.	This is the 3-Tier solution! Ensure nginx.conf is proxying /api/ to the backend, and index.html calls a relative path (/api/notes).
+![alt text](image.png)
 
 -----
 
