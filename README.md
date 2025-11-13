@@ -92,6 +92,8 @@ Refactored the Redis database from a disposable `Deployment` to a **`StatefulSet
 
 ## 🚀 How to Deploy on Kubernetes (Minikube)
 
+**> 📖 [See my complete Troubleshooting Log here!](https://github.com/Fardeen2812/k8s-3tier-app/blob/main/Troubleshooting.md) <**
+
 These instructions assume you have [Minikube](https://minikube.sigs.k8s.io/docs/start/) installed.
 
 ### 1\. Start Minikube
