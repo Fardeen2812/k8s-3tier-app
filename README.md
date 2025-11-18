@@ -1,11 +1,11 @@
 
 -----
 
-# 🧱 K8s Note App — A DevOps Journey
+# 🧱 K8s Note App — From Local to Cloud-Native (AWS EKS)
 
-A simple **note-taking web app** built to demonstrate a real-world **DevOps learning journey**. This project evolves from a single container to a 3-tier, persistent application running on **Kubernetes (Minikube)**.
+A simple **note-taking web app** built to demonstrate a real-world **DevOps learning journey**. This project has evolved from a single local container to a scalable, 3-tier application running on  **AWS EKS, provisioned via Terraform.**.
 
-It showcases the evolution from a simple Docker setup to a cloud-native application, complete with a `StatefulSet` for persistent data storage.
+It showcases the transition from manual operations to Infrastructure as Code (IaC) and persistent cloud storage.
 
 -----
 
@@ -16,8 +16,8 @@ It showcases the evolution from a simple Docker setup to a cloud-native applicat
 | **Frontend** | Nginx, HTML/CSS/JS | Serves static UI & acts as a reverse proxy |
 | **Backend** | Flask (Python 3.9) | REST API for note operations |
 | **Database** | Redis (StatefulSet) | Persistent in-memory data storage |
-| **Orchestration** | Kubernetes (Minikube) | Container orchestration for all services |
-| **Local Dev** | Docker, Docker Compose | (Alternative) for simple local testing |
+| **Infrastructure** | Terraform (AWS) | Managed control plane and worker nodes
+| **Orchestration** | Kubernetes (Minikube) | VPC, EKS Cluster, ECR Repositories, IAM |
 
 -----
 
@@ -27,55 +27,55 @@ It showcases the evolution from a simple Docker setup to a cloud-native applicat
 k8s-3tier-app/
 │
 ├── frontend/
-│   ├── dockerfile          # Nginx Dockerfile
-│   ├── nginx.conf          # Nginx reverse proxy (K8s Service aware)
-│   ├── index.html          # Static frontend UI
-│   └── static/
-│       └── favicon.ico
+│   ├── dockerfile          # Nginx Dockerfile (Multi-arch support)
+│   ├── nginx.conf          # Nginx reverse proxy config
+│   └── index.html          # Static UI
 │
 ├── backend/
-│   ├── app.py              # Flask API (pure backend)
-│   ├── dockerfile          # Backend Dockerfile
+│   ├── app.py              # Flask API
+│   ├── dockerfile          # Backend Dockerfile (Multi-arch support)
 │   └── requirements.txt    # Python dependencies
 │
-├── k8s/
-│   ├── 1-redis-headless-service.yaml   # Creates stable DNS for Redis pods
-│   ├── 2-redis-statefulset.yaml        # Deploys Redis as a stateful app
-│   ├── 3-backend-deployment.yaml       # Deploys the Flask API
-│   ├── 4-backend-service.yaml          # Internal service for backend
-│   ├── 5-frontend-deployment.yaml      # Deploys the Nginx frontend
-│   └── 6-frontend-service.yaml         # Exposes the app via NodePort
+├── k8s/                    # Kubernetes Manifests
+│   ├── 1-redis-headless-service.yaml
+│   ├── 2-redis-statefulset.yaml
+│   ├── 3-backend-deployment.yaml
+│   ├── 4-backend-service.yaml
+│   ├── 5-frontend-deployment.yaml
+│   ├── 6-frontend-service.yaml
+│   ├── 7-frontend-hpa.yaml
+│   └── 8-backend-hpa.yaml
 │
-└── docker-compose.yml      # For local Docker-only testing
+├── terraform-app/          # Main Infrastructure Code
+│   ├── main.tf             # EKS, VPC, and ECR definitions
+│   ├── backend.tf          # Remote state configuration (S3)
+│   ├── variables.tf
+│   └── outputs.tf
+│
+└── terraform-backend/      # One-time setup for S3 State bucket
+│   ├──  main.tf
+│   ├── variable.tf
 ```
 
 -----
 
 ## 🚀 The DevOps Journey (Completed Milestones)
 
-### 1\. Docker Fundamentals
+### Phase 1: Local Development
 
-Containerized the Flask backend with a `Dockerfile` and ran it locally.
+* Containerized Flask and Redis using Docker.
 
-### 2\. Docker Compose (2-Tier)
+* Orchestrated locally with **Docker Compose** to solve networking issues.
 
-Added a `docker-compose.yml` to launch and network the `app` (Flask) and `redis` services.
+* Refactored to a **3-Tier Architecture** (Nginx + Flask + Redis) to resolve CORS and API routing issues.
 
-### 3\. 3-Tier Architecture & Reverse Proxy
+### Phase 2: Local Kubernetes (Minikube)
 
-Refactored the app into a 3-Tier system to solve CORS/network issues.
+* Migrated to **Minikube** using raw K8s manifests.
 
-  * **Frontend:** Created an **Nginx** service to act as a reverse proxy.
-  * **Backend:** Stripped the Flask app into a **pure API**.
-  * **Result:** A scalable design accessible from `ngrok`.
+* Implemented **Service Discovery** so Nginx could find the Backend.
 
-### 4\. Kubernetes Deployment (Minikube)
-
-Migrated the entire 3-tier application from Docker Compose to **Kubernetes**.
-
-  * Wrote 6 K8s manifest files (`Deployment`, `Service`) to define the desired state.
-  * Deployed all services to a local **Minikube** cluster.
-  * Configured Nginx to use K8s **service discovery** (`backend-service`) instead of container names.
+* Refactored Redis from a Deployment to a **StatefulSet** with PVCs to solve data persistence issues.
 
 ### 5\. Persistent Data (StatefulSet)
 
@@ -92,106 +92,85 @@ Refactored the Redis database from a disposable `Deployment` to a **`StatefulSet
 
 ## 🚀 How to Deploy on Kubernetes (Minikube)
 
-**> 📖 [See my complete Troubleshooting Log here!](https://github.com/Fardeen2812/k8s-3tier-app/blob/main/Troubleshooting.md) <**
-
 These instructions assume you have [Minikube](https://minikube.sigs.k8s.io/docs/start/) installed.
 
 ### 1\. Start Minikube
 
 ```bash
-minikube start
+cd terraform-app
+terraform init
+terraform apply
 ```
 
-### 2\. Set Docker Environment
+Note the ECR Repository URLs and Cluster Name from the outputs.
 
-Point your terminal to Minikube's internal Docker daemon. This is **critical** so you build images *inside* the cluster.
+## 2. Build & Push Images
+
+Login to ECR and push your images. ***Note:*** If you are on a Mac (M1/M2), you must build for ```linux/amd64.```
 
 ```bash
-# For bash/zsh
-eval $(minikube -p minikube docker-env)
-
-# For PowerShell
-# minikube -p minikube docker-env | Invoke-Expression
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
+```
+```bash
+# Build and Push
+docker buildx build --platform linux/amd64 -t <BACKEND_REPO_URL>:v1 ./backend --push
+docker buildx build --platform linux/amd64 -t <FRONTEND_REPO_URL>:v1 ./frontend --push
 ```
 
-### 3\. Build Your App Images
+## 3. Configure kubectl
 
-Build the backend and frontend images with the tag K8s expects.
+Update your local kubeconfig to communicate with the new EKS cluster.
 
 ```bash
-docker build -t backend-app:v1 ./backend
-docker build -t frontend-app:v1 ./frontend
+aws eks update-kubeconfig --name 3tier-app-cluster --region us-east-1
 ```
 
-### 4\. Apply All K8s Manifests
+## 4. Deploy Application
 
-This one command creates all 6 resources in order.
+Apply the Kubernetes manifests. Ensure your manifests reference the correct ECR image URLs.
 
 ```bash
 kubectl apply -f k8s/
 ```
 
-### 5\. Check Deployment Status
+## 5. Verify Deployment
 
-Wait for all pods to be `Running`. You can also see your new `StatefulSet` (sts) and `PersistentVolumeClaim` (pvc).
+Check that all pods are running and the LoadBalancer has been provisioned.
+```bash
+kubectl get all
+```
+> 📸 **Screenshot:**  
+ ![alt text](https://file%2B.vscode-resource.vscode-cdn.net/Users/fardeenali/3tier-app/Screenshot%202025-11-13%20at%201.35.13%E2%80%AFPM.png?version%3D1763498989160)
+
+
+
+## 6. Access the App
+
+Get the DNS name of the Classic Load Balancer created by AWS.
 
 ```bash
-kubectl get all,pvc
+kubectl get service frontend-service
 ```
 
------
+Copy the ```EXTERNAL-IP``` (e.g., ```a1b2c...elb.amazonaws.com```) and open it in your browser.
 
-![alt text](<Screenshot 2025-11-13 at 1.35.13 PM.png>)
-
-### 6\. Open Your Application
-
-This command will automatically open the app in your browser.
-
-```bash
-minikube service frontend-service
-```
-
------
-
-![alt text](<Screenshot 2025-11-13 at 1.32.50 PM.png>)
-
-### 7\. Access from the Internet (Optional)
-
-1.  In the terminal running `minikube service`, note the local port (e.g., `127.0.0.1:61289`).
-2.  In a **new terminal**, run `ngrok` on that port:
-    ```bash
-    ngrok http 61289
-    ```
-
------
-
-## ⚙️ (Alternative) Run with Docker Compose
-
-For quick, non-Kubernetes testing:
-
-```bash
-docker-compose up --build
-```
-
-Access the app at `http://localhost:8080`.
-
------
+> 📸 [Add screenshot here of the app running in browser with the AWS ELB URL] <
 
 ## 🧭 The Road Ahead
 
-  * [ ] **Infrastructure as Code (Terraform + AWS):** Provision a real ECR registry and EKS cluster.
-  * [ ] **CI/CD Automation (GitHub Actions):** Build a pipeline to auto-build, test, and deploy to EKS on every `git push`.
-  * [ ] **Monitoring:** Integrate Prometheus & Grafana for observability.
-  * [ ] **Security:** Secure the app with HTTPS Ingress and manage secrets in K8s.
+* [ ] CI/CD Pipeline: Automate the build-and-deploy process using GitHub Actions.
 
------
+* [ ] Monitoring Stack: Deploy Prometheus and Grafana via Helm charts.
+
+* [ ] Ingress Controller: Replace the simple LoadBalancer with an Nginx Ingress Controller for better routing rules.
+
+* [ ] TLS/SSL: Secure the application with HTTPS using AWS ACM or Cert-Manager.
 
 ## 👨‍💻 Author
 
 Fardeen Ali
-🚀 Devops engineer
-Building this project step-by-step to master real-world DevOps —
-from Docker and CI/CD pipelines to cloud-native Kubernetes deployments.
+**🚀 DevOps Engineer**
+**Building scalable, cloud-native systems one layer at a time.**
 
 ## 🪪 License
 

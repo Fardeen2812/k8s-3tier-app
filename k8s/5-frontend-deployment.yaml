@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: frontend-app:v1
-          imagePullPolicy: Never
+          image: 663789292765.dkr.ecr.us-east-1.amazonaws.com/backend-repository-k8s-3tier-app:v1
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
