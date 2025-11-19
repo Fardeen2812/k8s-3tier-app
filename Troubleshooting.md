@@ -3,33 +3,70 @@
 
 # 🚀 Project Troubleshooting Log
 
-This document logs the real-world problems and solutions encountered during the development of this 3-tier application.
+This document serves as a knowledge base of the technical challenges encountered and resolved during the evolution of this project from a local script to a cloud-native EKS deployment.
+-----
+
+
+###  ☁️ Phase 3: AWS EKS & Terraform Issues
+
+  ###   1. Terraform ECR Name Validation
+
+**Issue:** Terraform ``terraform apply`` failed when creating ECR repositories.
+
+**Cause:** I attempted to use CamelCase names like ``Frontend-Repo``, but AWS ECR repository names must satisfy a strict regex (lowercase, numbers, hyphens, underscores only).
+
+**Fix:** Renamed resources in ``main.tf`` to fully lowercase (e.g., frontend-app).
+
+
+  ###  2. Docker Exec Format Error (CrashLoopBackOff)
+
+**Issue:** Pods deployed to EKS immediately crashed with ```exec /usr/local/bin/python: exec format error```.
+
+**Cause:**  I built the Docker images on my Apple Silicon (M1/M2) Mac, which defaults to ```arm64``` architecture. The AWS EKS worker nodes were running standard x86_64 (amd64) processors.
+
+**Fix:** Rebuilt and pushed the images using docker buildx to force the target architecture:
+
+``docker buildx build --platform linux/amd64 ...``
+
+### 3. Docker Push "Repository Does Not Exist"
+
+**Issue:** Docker failed to push images to ECR.
+
+**Cause:**  I tagged the image with a nested path (e.g., .../my-project/backend), but Terraform had only created top-level repositories.
+
+**Fix:** Retagged the images to match the exact repository URI provided by the Terraform output.
+
+### 4. kubectl Connection Refused / Timeout
+
+**Issue:**  kubectl commands timed out or failed to connect to the cluster API server.
+
+**Cause:** Two issues were identified:
+
+          **1.** The AWS CLI was configured with a typo in the region (us-eat-1). 
+
+          **2.** The EKS cluster endpoint was initially private, preventing my local machine from reaching it.
+
+**Fix:** Corrected the region configuration and ensured the EKS cluster endpoint access was set to Public (or properly configured VPN access). Updated kubeconfig via ``aws eks update-kubeconfig``.
+
+### 5. Backend CrashLoop (Redis Unreachable)
+
+**Issue:** The backend pods kept restarting (``CrashLoopBackOff``) even after fixing the architecture issue.
+
+**Cause:** The backend requires a connection to Redis to start. The Redis StatefulSet was stuck in a ``Pending`` state because the Persistent Volume Claim (PVC) could not be bound.
+
+**Fix:** See "PVC Binding Failure" below. Once Redis was fixed, the backend stabilized automatically.
+
+## 6. PVC Binding Failure (Pending Storage)
+
+**Issue:** The Redis PVC remained in ``Pending`` status.
+
+**Cause:**  The EKS cluster (version 1.29) does not include the AWS EBS CSI Driver by default. Without this driver, Kubernetes cannot talk to the AWS EBS API to provision volume storage.
+
+**Fix:** Installed the ``aws-ebs-csi-driver`` add-on to the EKS cluster. The PVC immediately bound to a new gp2 volume, and Redis started successfully.
 
 -----
 
-## Docker Compose Issues
-
-### 1\. API 404 & CORS Errors
-
-  * **Symptom:** The app UI would load, but it couldn't fetch or add notes. The browser console showed "API 404" or "CORS" errors.
-  * **Analysis:** This happened after the initial 3-tier refactor. The JavaScript in `index.html` was still using a hardcoded API URL (`http://localhost:5001`). When the app was accessed from `http://localhost:8080`, the browser blocked the cross-origin request.
-  * **Solution:** Configured Nginx as a reverse proxy. This involved updating `nginx.conf` to forward all requests for `/api/` to the backend service. Then, the `index.html` JavaScript was updated to call a relative path (`/api/notes`), letting Nginx handle the routing.
-
-### 2\. Server 500 Error
-
-  * **Symptom:** The application would respond with a "Server responded with status 500".
-  * **Analysis:** This error meant the Flask backend was running but could not successfully connect to the Redis container. The Redis container was likely unhealthy, not running, or not reachable.
-  * **Solution:** Used `docker ps` to confirm the `simple_notes_redis` container was in a "healthy" or "running" state. If not, `docker logs simple_notes_redis` was used to find the cause of the error.
-
-### 3\. Connection Error 111
-
-  * **Symptom:** The Flask app crashed with `Error 111 connecting to localhost:6379`.
-  * **Analysis:** The Flask container was trying to find Redis on `localhost` (which refers to itself *inside* the container), not on the separate Redis container.
-  * **Solution:** Used Docker Compose to place both the Flask and Redis containers on the same internal Docker network. The Flask app's configuration was then updated to connect to Redis using its service name (`REDIS_HOST=redis`).
-
------
-
-## Kubernetes Deployment Issues
+## ☸️ Phase 2: Kubernetes (Minikube) Issues
 
 ### 1\. Nginx 404 Error on Minikube
 
@@ -74,3 +111,21 @@ This document logs the real-world problems and solutions encountered during the 
         }
     }
     ```
+
+## 🐳 Phase 1: Docker Compose Issues
+
+  * **Symptom:** The app UI would load, but it couldn't fetch or add notes. The browser console showed "API 404" or "CORS" errors.
+  * **Analysis:** This happened after the initial 3-tier refactor. The JavaScript in `index.html` was still using a hardcoded API URL (`http://localhost:5001`). When the app was accessed from `http://localhost:8080`, the browser blocked the cross-origin request.
+  * **Solution:** Configured Nginx as a reverse proxy. This involved updating `nginx.conf` to forward all requests for `/api/` to the backend service. Then, the `index.html` JavaScript was updated to call a relative path (`/api/notes`), letting Nginx handle the routing.
+
+###  Server 500 Error
+
+  * **Symptom:** The application would respond with a "Server responded with status 500".
+  * **Analysis:** This error meant the Flask backend was running but could not successfully connect to the Redis container. The Redis container was likely unhealthy, not running, or not reachable.
+  * **Solution:** Used `docker ps` to confirm the `simple_notes_redis` container was in a "healthy" or "running" state. If not, `docker logs simple_notes_redis` was used to find the cause of the error.
+
+###  Connection Error 111
+
+  * **Symptom:** The Flask app crashed with `Error 111 connecting to localhost:6379`.
+  * **Analysis:** The Flask container was trying to find Redis on `localhost` (which refers to itself *inside* the container), not on the separate Redis container.
+  * **Solution:** Used Docker Compose to place both the Flask and Redis containers on the same internal Docker network. The Flask app's configuration was then updated to connect to Redis using its service name (`REDIS_HOST=redis`).

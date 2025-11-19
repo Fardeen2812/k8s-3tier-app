@@ -77,24 +77,25 @@ k8s-3tier-app/
 
 * Refactored Redis from a Deployment to a **StatefulSet** with PVCs to solve data persistence issues.
 
-### 5\. Persistent Data (StatefulSet)
+### Phase 3: Cloud Native (AWS EKS & Terraform)
 
-Refactored the Redis database from a disposable `Deployment` to a **`StatefulSet`**.
+* **Infrastructure as Code:** Provisioned a production-ready VPC, EKS 1.29 Cluster, and ECR repositories using Terraform modules.
 
-  * **Problem:** Using a `Deployment` for Redis with 2 replicas caused inconsistent data (different notes on refresh).
-  * **Solution:**
-    1.  Created a **Headless Service** for stable network identity.
-    2.  Wrote a **`StatefulSet`** manifest for Redis.
-    3.  Created a **Persistent Volume Claim (PVC)** to request 1Gi of stable storage.
-  * **Result:** The Redis pod (`redis-0`) now survives restarts and crashes with all its data intact. The app is now stateful\!
+* **Remote State:** Configured Terraform to use S3 and DynamoDB for secure, shared state management.
 
------
+* **Multi-Arch Builds:** Built and pushed `amd64` images to ECR to ensure compatibility with AWS worker nodes.
 
-## 🚀 How to Deploy on Kubernetes (Minikube)
+* **Persistent Cloud Storage:** Enabled the AWS EBS CSI Driver to bind Redis PVCs to real gp2 EBS volumes.
 
-These instructions assume you have [Minikube](https://minikube.sigs.k8s.io/docs/start/) installed.
+* **Scaling:** Implemented Horizontal Pod Autoscalers (HPA) for frontend and backend service
 
-### 1\. Start Minikube
+## ☁️ How to Deploy on AWS EKS
+
+> 📖 See my complete Troubleshooting Log here! Troubleshooting.md <
+
+## 1. Provision Infrastructure
+
+Navigate to the terraform directory and apply the configuration.
 
 ```bash
 cd terraform-app
@@ -139,8 +140,8 @@ Check that all pods are running and the LoadBalancer has been provisioned.
 ```bash
 kubectl get all
 ```
-> 📸 **Screenshot:**  
- ![alt text](https://file%2B.vscode-resource.vscode-cdn.net/Users/fardeenali/3tier-app/Screenshot%202025-11-13%20at%201.35.13%E2%80%AFPM.png?version%3D1763498989160)
+
+ ![alt text](<Screenshot 2025-11-18 at 4.59.34 PM.png>)
 
 
 
@@ -154,7 +155,7 @@ kubectl get service frontend-service
 
 Copy the ```EXTERNAL-IP``` (e.g., ```a1b2c...elb.amazonaws.com```) and open it in your browser.
 
-> 📸 [Add screenshot here of the app running in browser with the AWS ELB URL] <
+![> 📸 \[Add screenshot here of the app running in browser with the AWS ELB URL\] <](<Screenshot 2025-11-13 at 1.32.50 PM.png>)
 
 ## 🧭 The Road Ahead
 
