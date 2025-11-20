@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: frontend-deployment
 spec:
-  replicas: 2
+
   selector:
     matchLabels:
       app: frontend
@@ -14,7 +14,14 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: 663789292765.dkr.ecr.us-east-1.amazonaws.com/backend-repository-k8s-3tier-app:v1
+          image: 663789292765.dkr.ecr.us-east-1.amazonaws.com/frontend-repository-k8s-3tier-app:v1
           imagePullPolicy: Always
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"

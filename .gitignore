@@ -1,15 +1,41 @@
-# Python Virtual Environment
-.venv/
-venv/
-*.venv
-
-# Python Cache
-__pycache__/
-*.pyc
-
-# Environment files
-.env
-dump.rdb
-.vscode/
-.tfstate*
+# Terraform state files
+*.tfstate
+*.tfstate.*
+.terraform/
 .terraform.lock.hcl
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+ENV/
+env/
+*.egg-info/
+.pytest_cache/
+
+# Redis
+dump.rdb
+*.rdb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Secrets
+*.pem
+*.key
+secrets/

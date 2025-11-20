@@ -40,7 +40,7 @@ This document serves as a knowledge base of the technical challenges encountered
 
 **Issue:**  kubectl commands timed out or failed to connect to the cluster API server.
 
-**Cause:** Two issues were identified:
+**Cause:** One issue were identified:
 
           **1.** The AWS CLI was configured with a typo in the region (us-eat-1). 
 
