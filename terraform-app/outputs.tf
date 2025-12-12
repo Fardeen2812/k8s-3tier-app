@@ -18,3 +18,6 @@ output "backend_repository_url" {
   value = aws_ecr_repository.backend_repository.repository_url
 }
 
+output "existing_vpc_id" {
+  value = data.aws_vpc.existing.id
+}
