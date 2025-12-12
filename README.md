@@ -40,6 +40,12 @@ This section details the evolution of the project from a local setup to a scalab
 * **Persistent Cloud Storage:** Enabled the AWS EBS CSI Driver to bind Redis PVCs to real gp2 EBS volumes.
 * **Scaling:** Implemented Horizontal Pod Autoscalers (HPA) for frontend and backend service.
 
+### Phase 4: CI/CD Automation (Jenkins)
+* Implemented **Jenkins Pipeline as Code** (`Jenkinsfile`) for continuous delivery.
+* Automated the **Multi-Architecture Docker Build** (`linux/amd64`) and push to AWS ECR.
+* Enabled **Continuous Deployment** to AWS EKS using `kubectl set image` to trigger rolling updates on every code change.
+* Achieved full automation from code commit to application update on the cluster.
+
 ---
 
 ## 🎯 Overview
@@ -288,6 +294,7 @@ kubectl get secret --namespace monitoring prometheus-grafana -o jsonpath='{.data
 ├── setup-monitoring.sh         # Monitoring stack installer
 ├── PROJECT-SUMMARY.md          # Detailed project documentation
 ├── QUICK-REFERENCE.md          # Quick command reference
+├── Jenkinsfile                 # CI/CD pipeline as code
 └── README.md                   # This file
 ```
 
@@ -346,10 +353,10 @@ kubectl get nodes
 - ✅ Monitoring and observability with Prometheus/Grafana
 - ✅ Cost optimization techniques for cloud infrastructure
 - ✅ Docker multi-platform builds and ECR integration
+- ✅ CI/CD Automation with Jenkins Pipeline
 
 ## 🚀 Future Enhancements
 
-- [ ] Implement CI/CD pipeline (GitHub Actions)
 - [ ] Add Ingress Controller (AWS ALB)
 - [ ] Implement ELK Stack for centralized logging
 - [ ] Integrate AWS Secrets Manager
