@@ -116,6 +116,7 @@ This project demonstrates a complete production-grade deployment of a 3-tier app
 | **Monitoring** | Prometheus, Grafana |
 | **Container Registry** | AWS ECR |
 | **Cloud Provider** | AWS |
+| **CI/CD** | Jenkins |
 
 ## 📸 Screenshots
 
