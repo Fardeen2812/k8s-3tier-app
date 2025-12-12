@@ -6,7 +6,7 @@ pipeline {
     environment {
         AWS_REGION = 'us-east-1'
         CLUSTER_NAME = 'eks-cluster-K8s-3Tier-App'
-        APP_NAME = 'my-3tier-app'
+        APP_NAME = 'k8s-3tier-app'
         AWS_ACCOUNT_ID = '663789292765'
         // Dynamic tag for image versioning
         IMAGE_TAG = "jenkins-${BUILD_NUMBER}"
